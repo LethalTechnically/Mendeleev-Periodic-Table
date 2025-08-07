@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mendeleev's Periodic Table Analysis</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.20.6/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --espresso: #3c2f2f;
+      --mocha: #6f4e37;
+      --latte: #e6d5b8;
+      --cream: #e8d7b6;
+      --dark-roast: #231709;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(-100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(-100%); opacity: 0; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .drawer-open {
+      animation: slideIn 0.4s ease-out forwards;
+    }
+    .drawer-close {
+      animation: slideOut 0.4s ease-out forwards;
+    }
+    .content-enter {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    .cream-bg {
+      background: var(--cream);
+      position: relative;
+      overflow: hidden;
+    }
+    .cream-bg::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path fill="rgba(111, 78, 55, 0.05)" d="M0,0 h100 v100 h-100 z M10,10 c10,0 20,5 25,15 c5,-10 15,-15 25,-15 c10,0 20,5 25,15 c5,-10 15,-15 25,-15 v-15 h-100 z" /></svg>') repeat;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    .tooltip {
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+    .tooltip-parent:hover .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+    .rotate-hover:hover {
+      transform: rotate(3deg) scale(1.05);
+    }
+    .progress-circle {
+      transform: rotate(-90deg);
+    }
+    .progress-circle-bg {
+      fill: none;
+      stroke: var(--latte);
+      stroke-width: 8;
+    }
+    .progress-circle-fill {
+      fill: none;
+      stroke: var(--mocha);
+      stroke-width: 8;
+      stroke-linecap: round;
+      transition: stroke-dasharray 0.5s ease-in-out;
+    }
+    .table-row:hover {
+      background: var(--latte);
+      transform: scale(1.02);
+      transition: all 0.3s ease-in-out;
+    }
+    .element-card {
+      transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+    .element-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div id="root" class="min-h-screen cream-bg"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const Drawer = ({ isOpen, onClose, setActiveSection, activeSection, visitedSections, setVisitedSections }) => {
+      const sections = [
+        { id: 'features', title: 'Key Features', tooltip: 'Mendeleev’s table structure and predictions' },
+        { id: 'advantages-disadvantages', title: 'Advantages & Disadvantages', tooltip: 'Strengths and limitations' },
+        { id: 'comparison', title: 'Model Comparison', tooltip: 'Mendeleev vs. modern table' },
+        { id: 'revolutionary', title: 'Revolutionary Impact', tooltip: 'Why Mendeleev’s model was groundbreaking' },
+        { id: 'understanding', title: 'Element Understanding', tooltip: 'Modern table improvements' },
+        { id: 'ai-patterns', title: 'AI Pattern Detection', tooltip: 'AI-driven chemical insights' },
+        { id: 'ai-predictions', title: 'AI Element Prediction', tooltip: 'Predicting new elements with AI' },
+        { id: 'efficiency', title: 'Table Efficiency', tooltip: 'Current table’s effectiveness' },
+        { id: 'conclusion', title: 'Conclusion & Timeline', tooltip: 'Evolution and future of the periodic table' },
+      ];
+
+      return (
+        <div className={`fixed inset-0 z-50 ${isOpen ? 'drawer-open' : 'drawer-close'} bg-black bg-opacity-70`}>
+          <div className="w-80 bg-[var(--espresso)] h-full p-6 text-[var(--latte)] shadow-2xl rounded-r-2xl">
+            <button
+              onClick={onClose}
+              className="mb-6 bg-[var(--mocha)] text-[var(--latte)] px-4 py-2 rounded-lg hover:bg-[var(--dark-roast)] transition-all duration-300 transform rotate-hover"
+            >
+              Close
+            </button>
+            <h2 className="text-2xl font-bold mb-6 tracking-wide">Periodic Table Insights</h2>
+            <ul>
+              {sections.map(section => (
+                <li key={section.id} className="mb-3 relative tooltip-parent">
+                  <button
+                    onClick={() => {
+                      setActiveSection(section.id);
+                      setVisitedSections(prev => new Set([...prev, section.id]));
+                      onClose();
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-300 transform rotate-hover ${
+                      activeSection === section.id
+                        ? 'bg-[var(--mocha)] text-[var(--latte)] shadow-md'
+                        : 'bg-[var(--dark-roast)] bg-opacity-80 hover:bg-[var(--mocha)] hover:text-[var(--latte)]'
+                    }`}
+                  >
+                    {section.title}
+                  </button>
+                  <span className="tooltip absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-[var(--dark-roast)] text-[var(--latte)] text-sm p-2 rounded-lg w-40">
+                    {section.tooltip}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      );
+    };
+
+    const AccordionSection = ({ title, children, searchTerm }) => {
+      const [isOpen, setIsOpen] = useState(false);
+
+      const highlightText = (text) => {
+        if (!searchTerm) return text;
+        const regex = new RegExp(`(${searchTerm})`, 'gi');
+        return text.replace(regex, '<span class="bg-yellow-200 text-[var(--dark-roast)]">$1</span>');
+      };
+
+      return (
+        <div className="mb-4 relative tooltip-parent">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-full text-left bg-[var(--mocha)] text-[var(--latte)] px-4 py-3 rounded-lg hover:bg-[var(--dark-roast)] transition-all duration-300 flex justify-between items-center shadow-md rotate-hover"
+          >
+            <span className="font-semibold">{title}</span>
+            <span className="text-xl">{isOpen ? '−' : '+'}</span>
+          </button>
+          <span className="tooltip absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-[var(--dark-roast)] text-[var(--latte)] text-sm p-2 rounded-lg w-40">
+            Click to {isOpen ? 'collapse' : 'expand'} details
+          </span>
+          {isOpen && (
+            <div className="mt-2 p-4 bg-[var(--cream)] text-[var(--dark-roast)] rounded-lg shadow-inner content-enter">
+              {typeof children === 'string' ? (
+                <div dangerouslySetInnerHTML={{ __html: highlightText(children) }} />
+              ) : (
+                children
+              )}
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const ComparisonTable = ({ searchTerm }) => {
+      const highlightText = (text) => {
+        if (!searchTerm) return text;
+        const regex = new RegExp(`(${searchTerm})`, 'gi');
+        return text.replace(regex, '<span class="bg-yellow-200 text-[var(--dark-roast)]">$1</span>');
+      };
+
+      const tableData = [
+        { feature: 'Basis of Arrangement', mendeleev: 'Atomic mass', modern: 'Atomic number' },
+        { feature: 'Blank Spaces for Elements', mendeleev: 'Present, for undiscovered elements', modern: 'Mostly filled, with ongoing research for superheavy elements' },
+        { feature: 'Group Numbering', mendeleev: 'Inconsistent or missing', modern: 'Clearly numbered 1 to 18' },
+        { feature: 'Periods', mendeleev: 'Not clearly defined', modern: 'Seven well-defined periods' },
+        { feature: 'Noble Gases', mendeleev: 'Not included', modern: 'Present in Group 18' },
+        { feature: 'Explanation of Trends', mendeleev: 'Lacking', modern: 'Explained by electron configuration and quantum theory' },
+        { feature: 'Placement of Isotopes', mendeleev: 'Could not be explained', modern: 'Fits naturally due to atomic number' },
+      ];
+
+      return (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-[var(--mocha)] text-[var(--latte)]">
+                <th className="p-3">Feature</th>
+                <th className="p-3">Mendeleev’s Table</th>
+                <th className="p-3">Modern Periodic Table</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tableData.map((row, index) => (
+                <tr key={index} className="border-b border-[var(--latte)] table-row">
+                  <td className="p-3" dangerouslySetInnerHTML={{ __html: highlightText(row.feature) }}></td>
+                  <td className="p-3" dangerouslySetInnerHTML={{ __html: highlightText(row.mendeleev) }}></td>
+                  <td className="p-3" dangerouslySetInnerHTML={{ __html: highlightText(row.modern) }}></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    };
+
+    const ElementCard = ({ name, symbol, details }) => {
+      const [isOpen, setIsOpen] = useState(false);
+
+      return (
+        <div className="relative">
+          <div
+            onClick={() => setIsOpen(true)}
+            className="element-card bg-[var(--latte)] p-3 rounded-lg cursor-pointer shadow-md m-2"
+          >
+            <h4 className="font-bold text-[var(--dark-roast)]">{name} ({symbol})</h4>
+            <p className="text-sm text-[var(--dark-roast)]">Click for details</p>
+          </div>
+          {isOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-[var(--cream)] p-6 rounded-lg max-w-md">
+                <h4 className="font-bold text-lg text-[var(--dark-roast)]">{name} ({symbol})</h4>
+                <p className="text-[var(--dark-roast)]">{details}</p>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="mt-4 bg-[var(--mocha)] text-[var(--latte)] px-4 py-2 rounded-lg hover:bg-[var(--dark-roast)]"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const Timeline = () => {
+      const events = [
+        { year: 1869, description: 'Mendeleev publishes his periodic table based on atomic mass, predicting undiscovered elements.' },
+        { year: 1913, description: 'Moseley establishes atomic number as the basis for element arrangement, resolving anomalies.' },
+        { year: '1920s-1930s', description: 'Quantum mechanics explains periodicity via electron configurations, enhancing trends.' },
+        { year: '21st Century', description: 'AI explores new patterns and predicts superheavy elements, pushing chemical frontiers.' },
+      ];
+
+      return (
+        <div className="space-y-4">
+          {events.map((event, index) => (
+            <div key={index} className="flex items-center">
+              <div className="w-24 text-[var(--dark-roast)] font-bold">{event.year}</div>
+              <div className="flex-1 bg-[var(--latte)] p-3 rounded-lg shadow-md">
+                <p className="text-[var(--dark-roast)]">{event.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    };
+
+    const App = () => {
+      const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+      const [activeSection, setActiveSection] = useState('features');
+      const [visitedSections, setVisitedSections] = useState(new Set());
+      const [searchTerm, setSearchTerm] = useState('');
+      const contentRef = useRef(null);
+
+      useEffect(() => {
+        document.body.className = 'cream-bg text-[var(--dark-roast)]';
+        if (contentRef.current) {
+          contentRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, [activeSection]);
+
+      const totalSections = 9;
+      const visitedCount = visitedSections.size;
+      const progress = (visitedCount / totalSections) * 100;
+
+      const content = {
+        features: (
+          <AccordionSection title="Key Features of Mendeleev’s Periodic Table" searchTerm={searchTerm}>
+            <div className="space-y-4">
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">Historical Context</summary>
+                <p>Dmitri Mendeleev’s 1869 periodic table, organizing 63 known elements by increasing atomic mass, built on earlier attempts like Döbereiner’s triads (1817) and Newlands’ Law of Octaves (1865). Unlike predecessors, Mendeleev’s systematic grouping by chemical properties introduced periodicity, a repeating pattern of properties at regular intervals.</p>
+              </details>
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">Predictive Gaps</summary>
+                <p>Mendeleev left gaps for undiscovered elements, confidently predicting properties for eka-aluminium (gallium), eka-silicon (germanium), and eka-boron (scandium). These predictions, later confirmed, included atomic masses, densities, and chemical behaviors, showcasing his table’s foresight.</p>
+                <div className="flex flex-wrap">
+                  <ElementCard
+                    name="Gallium"
+                    symbol="Ga"
+                    details="Predicted as eka-aluminium in 1869, discovered in 1875 by Paul-Émile Lecoq de Boisbaudran. Atomic mass: 69.72, melting point: 29.76°C, density: 5.91 g/cm³. Used in semiconductors and low-melting alloys."
+                  />
+                  <ElementCard
+                    name="Germanium"
+                    symbol="Ge"
+                    details="Predicted as eka-silicon, discovered in 1886 by Clemens Winkler. Atomic mass: 72.64, density: 5.32 g/cm³. A semiconductor critical for electronics and fiber optics."
+                  />
+                  <ElementCard
+                    name="Scandium"
+                    symbol="Sc"
+                    details="Predicted as eka-boron, discovered in 1879 by Lars Fredrik Nilson. Atomic mass: 44.96, density: 2.99 g/cm³. Used in lightweight alloys for aerospace."
+                  />
+                </div>
+              </details>
+            </div>
+          </AccordionSection>
+        ),
+        'advantages-disadvantages': (
+          <AccordionSection title="Advantages and Disadvantages of Mendeleev’s Table" searchTerm={searchTerm}>
+            <div className="space-y-4">
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">Advantages</summary>
+                <ul className="list-disc pl-5">
+                  <li>Logical organization clarified relationships among 63 elements, providing a clear framework for chemists.</li>
+                  <li>Predicted properties of undiscovered elements like gallium and germanium, validated by later discoveries, enhancing credibility.</li>
+                  <li>Established periodicity, recognizing repeating chemical properties, a cornerstone of modern chemistry.</li>
+                  <li>Prioritized chemical behavior over strict atomic mass order, reflecting deep insight into element patterns.</li>
+                </ul>
+              </details>
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">Disadvantages</summary>
+                <ul className="list-disc pl-5">
+                  <li>Atomic mass-based ordering caused anomalies, such as iodine (126.9 u) placed before tellurium (127.6 u) to align with chemical properties.</li>
+                  <li>Could not account for isotopes, which share atomic numbers but differ in mass, discovered later.</li>
+                  <li>Hydrogen’s unique properties made its placement ambiguous, not fitting neatly into any group.</li>
+                  <li>Lacked theoretical grounding, as protons, electrons, and neutrons were unknown in 1869, limiting periodicity explanations.</li>
+                  <li>Missed noble gases (discovered in the 1890s) and was constrained by incomplete element data.</li>
+                </ul>
+              </details>
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">Historical Comparison</summary>
+                <p>Compared to earlier models like Newlands’ Law of Octaves, Mendeleev’s table was more predictive and systematic, but its limitations highlighted the need for a theoretical basis, later provided by atomic number and quantum mechanics.</p>
+              </details>
+            </div>
+          </AccordionSection>
+        ),
+        comparison: (
+          <AccordionSection title="Visual Comparison of Periodic Table Models" searchTerm={searchTerm}>
+            <div className="space-y-4">
+              <p>The following table compares Mendeleev’s 1869 table with the modern periodic table, highlighting structural and theoretical differences:</p>
+              <ComparisonTable searchTerm={searchTerm} />
+              <p>Additional notes: The modern table incorporates synthetic superheavy elements (e.g., oganesson) and uses quantum theory to explain trends like electronegativity and ionization energy, absent in Mendeleev’s empirical model.</p>
+            </div>
+          </AccordionSection>
+        ),
+        revolutionary: (
+          <AccordionSection title="Mendeleev’s Revolutionary Model" searchTerm={searchTerm}>
+            <div className="space-y-4">
+              <p>Mendeleev’s 1869 periodic table transformed chemistry from a descriptive to a predictive science. By anticipating elements like gallium and germanium, later discovered with matching properties, it validated his approach. The concept of periodicity—repeating chemical properties—unified chemical knowledge and inspired global research.</p>
+              <p>Its cultural and scientific impact was profound, adopted worldwide by the late 19th century. It laid the foundation for Moseley’s atomic number discovery (1913) and quantum theory, making it a cornerstone of modern chemistry.</p>
+            </div>
+          </AccordionSection>
+        ),
+        understanding: (
+          <AccordionSection title="Improved Element Understanding" searchTerm={searchTerm}>
+            <div className="space-y-4">
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">Atomic Number Basis</summary>
+                <p>Henry Moseley’s 1913 discovery of atomic number resolved anomalies in Mendeleev’s table, such as iodine-tellurium placement, by ordering elements by proton count, providing a more consistent framework.</p>
+              </details>
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">Quantum Mechanics</summary>
+                <p>Quantum mechanics, developed in the 1920s, explained periodic trends like electronegativity, ionization energy, and atomic radius through electron configurations. The modern table organizes elements into 18 groups and 7 periods, including f-block elements (lanthanides, actinides).</p>
+              </details>
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">Modern Additions</summary>
+                <p>The modern table distinguishes metals, metalloids, and nonmetals, and accommodates synthetic superheavy elements (e.g., elements 113–118). It addresses challenges in placing these elements due to relativistic effects, expanding Mendeleev’s framework.</p>
+              </details>
+            </div>
+          </AccordionSection>
+        ),
+        'ai-patterns': (
+          <AccordionSection title="AI-Detected Patterns in Periodic Table Design" searchTerm={searchTerm}>
+            <div className="space-y-4">
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">AI Insights</summary>
+                <p>AI can analyze vast datasets to uncover non-linear patterns in atomic structure, bonding tendencies, or reactivity under extreme conditions (e.g., high pressure or magnetic fields). It may reveal quantum-level similarities or isotopic stability trends beyond human observation.</p>
+              </details>
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">Advanced Visualizations</summary>
+                <p>AI could propose 3D or dynamic models reflecting electron orbitals or atomic interactions, potentially integrating interdisciplinary data, such as chemical behavior in astrophysical environments.</p>
+              </details>
+            </div>
+          </AccordionSection>
+        ),
+        'ai-predictions': (
+          <AccordionSection title="AI-Based Models for Predicting New Elements" searchTerm={searchTerm}>
+            <div className="space-y-4">
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">Element Prediction</summary>
+                <p>AI predicts superheavy elements beyond oganesson (Z=118) using nuclear stability and electron configurations, potentially reorganizing tables by synthesis feasibility or stability under specific conditions.</p>
+              </details>
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">Material Discovery</summary>
+                <p>AI models complex interactions to design novel materials, such as superconductors, alloys, or compounds for medical applications, advancing chemical and technological innovation.</p>
+              </details>
+            </div>
+          </AccordionSection>
+        ),
+        efficiency: (
+          <AccordionSection title="Efficiency of the Current Periodic Table" searchTerm={searchTerm}>
+            <div className="space-y-4">
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">Current Efficiency</summary>
+                <p>The modern periodic table is highly effective for education and research, with clear group and period structures based on atomic number, facilitating trend visualization and chemical understanding.</p>
+              </details>
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">Limitations</summary>
+                <p>It struggles with quantum or relativistic effects for superheavy elements, which may exhibit unexpected behaviors, suggesting potential for AI-driven alternative layouts.</p>
+              </details>
+              <details className="bg-[var(--latte)] p-2 rounded">
+                <summary className="cursor-pointer font-medium">AI Challenges</summary>
+                <p>AI models require experimental validation to ensure accuracy and risk producing overly complex or impractical designs for daily scientific use, necessitating a balance between innovation and usability.</p>
+              </details>
+            </div>
+          </AccordionSection>
+        ),
+        conclusion: (
+          <AccordionSection title="Conclusion and Evolution Timeline" searchTerm={searchTerm}>
+            <div className="space-y-4">
+              <p>The periodic table evolved from Mendeleev’s empirical, predictive model in 1869 to a modern structure grounded in atomic number (Moseley, 1913) and quantum theory (1920s-1930s). AI offers future enhancements, uncovering new patterns and predicting materials, but requires rigorous scientific validation. The table remains a dynamic, evolving tool reflecting humanity’s growing understanding of matter and its cultural significance in science.</p>
+              <h4 className="font-bold text-[var(--dark-roast)]">Timeline of Periodic Table Evolution</h4>
+              <Timeline />
+            </div>
+          </AccordionSection>
+        ),
+      };
+
+      return (
+        <div className="p-8 min-h-screen">
+          <div className="flex justify-between items-center mb-8 max-w-5xl mx-auto">
+            <button
+              onClick={() => setIsDrawerOpen(true)}
+              className="bg-[var(--mocha)] text-[var(--latte)] px-6 py-3 rounded-lg hover:bg-[var(--dark-roast)] transition-all duration-300 transform rotate-hover shadow-lg relative tooltip-parent"
+            >
+              Explore Topics
+              <span className="tooltip absolute top-full mt-2 bg-[var(--dark-roast)] text-[var(--latte)] text-sm p-2 rounded-lg w-40">
+                Open menu to browse sections
+              </span>
+            </button>
+            <div className="flex items-center space-x-4">
+              <input
+                type="text"
+                placeholder="Search keywords..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="px-4 py-2 rounded-lg bg-[var(--latte)] text-[var(--dark-roast)] focus:outline-none focus:ring-2 focus:ring-[var(--mocha)]"
+              />
+              <div className="relative">
+                <svg width="40" height="40" viewBox="0 0 100 100" className="progress-circle">
+                  <circle className="progress-circle-bg" cx="50" cy="50" r="40" />
+                  <circle
+                    className="progress-circle-fill"
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    strokeDasharray={`${progress * 2.51}, 251`}
+                    strokeDashoffset="0"
+                  />
+                </svg>
+                <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[var(--dark-roast)] text-sm">
+                  {visitedCount}/{totalSections}
+                </span>
+              </div>
+            </div>
+          </div>
+          <Drawer
+            isOpen={isDrawerOpen}
+            onClose={() => setIsDrawerOpen(false)}
+            setActiveSection={setActiveSection}
+            activeSection={activeSection}
+            visitedSections={visitedSections}
+            setVisitedSections={setVisitedSections}
+          />
+          <div ref={contentRef} className="max-w-5xl mx-auto p-8 bg-[var(--espresso)] bg-opacity-90 rounded-2xl shadow-2xl">
+            <h1 className="text-4xl font-extrabold text-center mb-8 text-[var(--latte)] tracking-tight">Mendeleev's Periodic Table</h1>
+            {content[activeSection]}
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
