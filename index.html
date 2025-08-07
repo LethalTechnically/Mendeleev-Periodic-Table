@@ -40,7 +40,7 @@
     .cream-bg {
       background: var(--cream);
       position: relative;
-      overflow: hidden;
+      overflow: auto;
     }
     .cream-bg::before {
       content: '';
@@ -91,6 +91,15 @@
     .element-card:hover {
       transform: scale(1.05);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    .section-image {
+      max-width: 100%;
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1rem;
     }
   </style>
 </head>
@@ -156,7 +165,7 @@
       const highlightText = (text) => {
         if (!searchTerm) return text;
         const regex = new RegExp(`(${searchTerm})`, 'gi');
-        return text.replace(regex, '<span class="bg-yellow-200 text-[var(--dark-roast)]">$1</span>');
+        return text.replace(regex, '<span className="bg-yellow-200 text-[var(--dark-roast)]">$1</span>');
       };
 
       return (
@@ -188,7 +197,7 @@
       const highlightText = (text) => {
         if (!searchTerm) return text;
         const regex = new RegExp(`(${searchTerm})`, 'gi');
-        return text.replace(regex, '<span class="bg-yellow-200 text-[var(--dark-roast)]">$1</span>');
+        return text.replace(regex, '<span className="bg-yellow-200 text-[var(--dark-roast)]">$1</span>');
       };
 
       const tableData = [
@@ -287,7 +296,12 @@
       useEffect(() => {
         document.body.className = 'cream-bg text-[var(--dark-roast)]';
         if (contentRef.current) {
-          contentRef.current.scrollIntoView({ behavior: 'smooth' });
+          console.log('Scrolling to section:', activeSection);
+          setTimeout(() => {
+            contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
+        } else {
+          console.warn('contentRef is not assigned');
         }
       }, [activeSection]);
 
@@ -299,6 +313,7 @@
         features: (
           <AccordionSection title="Key Features of Mendeleev’s Periodic Table" searchTerm={searchTerm}>
             <div className="space-y-4">
+              <img src="mendeleev.jpeg" alt="Mendeleev's 1869 periodic table" className="section-image" />
               <details className="bg-[var(--latte)] p-2 rounded">
                 <summary className="cursor-pointer font-medium">Historical Context</summary>
                 <p>Dmitri Mendeleev’s 1869 periodic table, organizing 63 known elements by increasing atomic mass, built on earlier attempts like Döbereiner’s triads (1817) and Newlands’ Law of Octaves (1865). Unlike predecessors, Mendeleev’s systematic grouping by chemical properties introduced periodicity, a repeating pattern of properties at regular intervals.</p>
@@ -335,7 +350,7 @@
                 <ul className="list-disc pl-5">
                   <li>Logical organization clarified relationships among 63 elements, providing a clear framework for chemists.</li>
                   <li>Predicted properties of undiscovered elements like gallium and germanium, validated by later discoveries, enhancing credibility.</li>
-                  <li>Established periodicity, recognizing repeating chemical properties, a cornerstone of modern chemistry.</li>
+                  <li>Established periodicity as a core chemical concept, influencing modern chemical theory.</li>
                   <li>Prioritized chemical behavior over strict atomic mass order, reflecting deep insight into element patterns.</li>
                 </ul>
               </details>
@@ -359,6 +374,7 @@
         comparison: (
           <AccordionSection title="Visual Comparison of Periodic Table Models" searchTerm={searchTerm}>
             <div className="space-y-4">
+              <img src="difference.jpeg" alt="Comparison of Mendeleev’s and modern periodic tables" className="section-image" />
               <p>The following table compares Mendeleev’s 1869 table with the modern periodic table, highlighting structural and theoretical differences:</p>
               <ComparisonTable searchTerm={searchTerm} />
               <p>Additional notes: The modern table incorporates synthetic superheavy elements (e.g., oganesson) and uses quantum theory to explain trends like electronegativity and ionization energy, absent in Mendeleev’s empirical model.</p>
@@ -449,7 +465,7 @@
       };
 
       return (
-        <div className="p-8 min-h-screen">
+        <div className="p-8">
           <div className="flex justify-between items-center mb-8 max-w-5xl mx-auto">
             <button
               onClick={() => setIsDrawerOpen(true)}
